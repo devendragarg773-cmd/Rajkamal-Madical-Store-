@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Rajkamal Medical Store</title>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <header class="topbar">
+
+    <div class="owner-tag">
+      @VIMAL SINGH DEORA
+    </div>
+
+    <div class="shop-name">
+      Rajkamal Medical Store
+    </div>
+
+    <div class="actions">
+
+      <button id="locationBtn" class="location-btn">
+        📍 Location
+      </button>
+
+      <button id="menuBtn" class="menu-btn">
+        ☰
+      </button>
+
+    </div>
+
+  </header>
+
+
+  <!-- MENU -->
+  <div id="menuPanel" class="menu-panel">
+
+    <button data-info="aboutShop">
+      About Shop
+    </button>
+
+    <button data-info="aboutOwner">
+      About Owner
+    </button>
+
+    <button id="ownerAccessBtn">
+      Owner Access
+    </button>
+
+  </div>
+
+
+  <main>
+
+    <!-- HOME PAGE -->
+    <section id="homePage" class="page active">
+
+      <h2>Categories</h2>
+
+      <div id="categories" class="categories"></div>
+
+    </section>
+
+
+    <!-- PRODUCT PAGE -->
+    <section id="productPage" class="page">
+
+      <div class="page-head">
+
+        <button id="backBtn" class="back-btn">
+          ← Home
+        </button>
+
+        <h2 id="categoryTitle">
+          All Items
+        </h2>
+
+      </div>
+
+
+      <!-- SEARCH -->
+      <div class="search-wrap">
+
+        <input
+          id="searchInput"
+          type="search"
+          placeholder="Search products..."
+        >
+
+      </div>
+
+
+      <!-- PRODUCTS -->
+      <div id="productGrid" class="product-grid"></div>
+
+    </section>
+
+  </main>
+
+
+  <!-- ABOUT MODAL -->
+  <div id="modal" class="modal hidden">
+
+    <div class="modal-box">
+
+      <button class="close" id="closeModal">
+        ×
+      </button>
+
+      <h3 id="modalTitle"></h3>
+
+      <p id="modalText"></p>
+
+    </div>
+
+  </div>
+
+
+  <!-- OWNER ACCESS -->
+  <div id="ownerModal" class="modal hidden">
+
+    <div class="modal-box owner-box">
+
+      <button class="close" id="closeOwner">
+        ×
+      </button>
+
+
+      <!-- LOGIN -->
+      <div id="loginView">
+
+        <h3>
+          Owner Access
+        </h3>
+
+        <input
+          id="passwordInput"
+          type="password"
+          placeholder="Enter password"
+        >
+
+        <button id="loginBtn" class="primary">
+          🔐 Login
+        </button>
+
+        <p id="loginMsg"></p>
+
+      </div>
+
+
+      <!-- DASHBOARD -->
+      <div id="dashboardView" class="hidden">
+
+        <h3>
+          Owner Dashboard
+        </h3>
+
+        <button id="addProductBtn" class="primary">
+          ＋ Add Product
+        </button>
+
+        <!-- LOCATION OPTION -->
+        <button
+          id="setLocationBtn"
+          class="location-owner-btn">
+          📍 Set / Change Location
+        </button>
+
+        <div id="ownerProducts"></div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ADD / EDIT PRODUCT -->
+  <div id="productFormModal" class="modal hidden">
+
+    <div class="modal-box form-box">
+
+      <button class="close" id="closeForm">
+        ×
+      </button>
+
+      <h3 id="formTitle">
+        Add Product
+      </h3>
+
+
+      <form id="productForm">
+
+        <!-- PRODUCT NAME -->
+        <input
+          id="productName"
+          required
+          placeholder="Product Name"
+        >
+
+
+        <!-- AVAILABLE QUANTITY -->
+        <input
+          id="productQty"
+          required
+          type="number"
+          min="0"
+          placeholder="Available Quantity"
+        >
+
+
+        <!-- PRICE -->
+        <input
+          id="productPrice"
+          required
+          type="number"
+          min="0"
+          step="0.01"
+          placeholder="Price ₹"
+        >
+
+
+        <!-- DESCRIPTION -->
+        <textarea
+          id="productDesc"
+          required
+          placeholder="Product Description">
+        </textarea>
+
+
+        <!-- REVIEWS -->
+        <input
+          id="productReviews"
+          placeholder="Reviews"
+        >
+
+
+        <!-- DIRECT CAMERA -->
+        <label class="camera-label">
+
+          📷 Take Product Photo
+
+          <input
+            id="productImage"
+            type="file"
+            accept="image/*"
+            capture="environment"
+          >
+
+        </label>
+
+
+        <!-- IMAGE PREVIEW -->
+        <img
+          id="imagePreview"
+          class="preview hidden"
+          alt="Product Preview"
+        >
+
+
+        <!-- SAVE -->
+        <button
+          class="primary"
+          type="submit">
+
+          💾 Save Product
+
+        </button>
+
+      </form>
+
+    </div>
+
+  </div>
+
+
+  <!-- LOCATION VIEW -->
+  <div id="locationModal" class="modal hidden">
+
+    <div class="modal-box">
+
+      <button class="close" id="closeLocation">
+        ×
+      </button>
+
+      <h3>
+        Store Location
+      </h3>
+
+      <p id="locationText">
+        Location not set by owner.
+      </p>
+
+    </div>
+
+  </div>
+
+
+  <!-- LOCATION SET FORM -->
+  <div id="locationFormModal" class="modal hidden">
+
+    <div class="modal-box">
+
+      <button class="close" id="closeLocationForm">
+        ×
+      </button>
+
+      <h3>
+        Set Store Location
+      </h3>
+
+      <input
+        id="storeLocationInput"
+        placeholder="Enter shop location"
+      >
+
+      <button
+        id="saveLocationBtn"
+        class="primary">
+
+        💾 Save Location
+
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- JAVASCRIPT -->
+  <script src="script.js"></script>
+
+</body>
+</html>
