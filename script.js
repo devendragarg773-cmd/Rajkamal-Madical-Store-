@@ -1,42 +1,74 @@
-const PASSWORD="123456";
+const API_URL="https://rajkamal-medical-store-backend-1.onrender.com";
+
+const PASSWORD="686807";
 const CATEGORIES=["Skin Care","Tablets","Protein","General Items","Shampoo & Soap","All Items"];
 
-const defaultProducts=[
-{id:1,name:"Paracetamol",qty:20,price:30,desc:"Common tablet",reviews:"",image:"",category:"Tablets",out:false},
-{id:2,name:"Vitamin Protein",qty:10,price:499,desc:"Protein product",reviews:"",image:"",category:"Protein",out:false},
-{id:3,name:"Face Cream",qty:8,price:199,desc:"Skin care product",reviews:"",image:"",category:"Skin Care",out:false},
-{id:4,name:"Bath Soap",qty:15,price:55,desc:"General bathing soap",reviews:"",image:"",category:"Shampoo & Soap",out:false}
-];
-
-let products=JSON.parse(localStorage.getItem("rajkamal_products")||"null")||defaultProducts;
+let products=[];
 let wishes=JSON.parse(localStorage.getItem("rajkamal_wishes")||"[]");
 
 let selectedCategory="All Items",selectedProductId=null,editingId=null;
+let token=localStorage.getItem("rajkamal_token")||"";
 
 const $=id=>document.getElementById(id);
 
+async function api(url,options={}){
+  options.headers=options.headers||{};
+
+  if(token){
+    options.headers.Authorization="Bearer "+token;
+  }
+
+  const res=await fetch(API_URL+url,options);
+
+  let data={};
+  try{
+    data=await res.json();
+  }catch(e){}
+
+  if(!res.ok){
+    throw new Error(data.message||data.error||"Server error");
+  }
+
+  return data;
+}
+
 function save(){
-  localStorage.setItem("rajkamal_products",JSON.stringify(products));
-  localStorage.setItem("rajkamal_wishes",JSON.stringify(wishes))
+  localStorage.setItem("rajkamal_wishes",JSON.stringify(wishes));
+}
+
+async function loadProducts(){
+  try{
+    const data=await api("/api/products");
+    products=Array.isArray(data)?data:(data.products||[]);
+    renderProducts();
+  }catch(e){
+    console.error(e);
+    $("productGrid").innerHTML=
+      `<div class="empty">Products load nahi ho rahe.</div>`;
+  }
 }
 
 function renderCategories(){
   $("categories").innerHTML=CATEGORIES.map(c=>`
     <button class="category" onclick="openCategory('${c}')">${c}</button>
-  `).join("")
+  `).join("");
 }
 
 function openCategory(c){
   selectedCategory=c;
   selectedProductId=null;
+
   $("homePage").classList.remove("active");
   $("productPage").classList.add("active");
+
   $("categoryTitle").textContent=c;
   $("searchInput").value="";
-  renderProducts()
+
+  renderProducts();
 }
 
 function productCard(p,selected=false){
+
   const unavailable=p.out||Number(p.qty)<=0;
 
   return `
@@ -56,12 +88,12 @@ function productCard(p,selected=false){
 
       <p>${p.desc||""}</p>
 
-      <button class="wish ${wishes.includes(p.id)?'active':''}" onclick="event.stopPropagation();toggleWish(${p.id})">
-        ${wishes.includes(p.id)?'♥ Wishlisted':'♡ Add to Wishlist'}
+      <button class="wish ${wishes.includes(Number(p.id))?'active':''}" onclick="event.stopPropagation();toggleWish(${p.id})">
+        ${wishes.includes(Number(p.id))?'♥ Wishlisted':'♡ Add to Wishlist'}
       </button>
 
     </div>
-  </article>`
+  </article>`;
 }
 
 function renderProducts(){
@@ -72,55 +104,63 @@ function renderProducts(){
     ?products
     :products.filter(p=>p.category===selectedCategory);
 
-  if(q)
+  if(q){
     list=list.filter(p=>
       (p.name+" "+p.desc).toLowerCase().includes(q)
     );
+  }
 
   if(selectedProductId){
-    const first=list.find(p=>p.id===selectedProductId);
+
+    const first=list.find(p=>Number(p.id)===Number(selectedProductId));
+
     list=first
-      ?[first,...list.filter(p=>p.id!==selectedProductId)]
-      :list
+      ?[first,...list.filter(p=>Number(p.id)!==Number(selectedProductId))]
+      :list;
   }
 
   $("productGrid").innerHTML=list.length
-    ?list.map(p=>productCard(p,p.id===selectedProductId)).join("")
+    ?list.map(p=>productCard(p,Number(p.id)===Number(selectedProductId))).join("")
     :`<div class="empty">No products found.</div>`;
 }
 
 function selectProduct(id){
   selectedProductId=id;
   renderProducts();
-  window.scrollTo({top:0,behavior:"smooth"})
+  window.scrollTo({top:0,behavior:"smooth"});
 }
 
 function toggleWish(id){
+
+  id=Number(id);
+
   wishes=wishes.includes(id)
     ?wishes.filter(x=>x!==id)
     :[...wishes,id];
 
   save();
-  renderProducts()
+  renderProducts();
 }
 
 function closeAll(){
-  document.querySelectorAll(".modal").forEach(x=>x.classList.add("hidden"))
+  document.querySelectorAll(".modal").forEach(x=>x.classList.add("hidden"));
 }
 
 $("menuBtn").onclick=()=>{
-  $("menuPanel").classList.toggle("show")
+  $("menuPanel").classList.toggle("show");
 };
 
 document.addEventListener("click",e=>{
   if(
     !e.target.closest(".actions") &&
     !e.target.closest(".menu-panel")
-  )
-    $("menuPanel").classList.remove("show")
+  ){
+    $("menuPanel").classList.remove("show");
+  }
 });
 
 document.querySelectorAll("[data-info]").forEach(b=>b.onclick=()=>{
+
   $("modalTitle").textContent=
     b.dataset.info==="aboutShop"
       ?"About Shop"
@@ -131,7 +171,7 @@ document.querySelectorAll("[data-info]").forEach(b=>b.onclick=()=>{
       ?"Rajkamal Medical Store — quality products and helpful service."
       :"Vimal Singh Deora";
 
-  $("modal").classList.remove("hidden")
+  $("modal").classList.remove("hidden");
 });
 
 $("closeModal").onclick=closeAll;
@@ -140,23 +180,32 @@ $("closeForm").onclick=closeAll;
 $("closeLocation").onclick=closeAll;
 $("closeLocationForm").onclick=closeAll;
 
-$("locationBtn").onclick=()=>{
-  $("locationText").textContent=
-    localStorage.getItem("rajkamal_location")||
-    "Location not set by owner.";
+$("locationBtn").onclick=async()=>{
 
-  $("locationModal").classList.remove("hidden")
+  try{
+    const data=await api("/api/location");
+
+    $("locationText").textContent=
+      data.location||
+      data.value||
+      "Location not set by owner.";
+
+  }catch(e){
+    $("locationText").textContent="Location not set by owner.";
+  }
+
+  $("locationModal").classList.remove("hidden");
 };
 
 $("backBtn").onclick=()=>{
   $("productPage").classList.remove("active");
   $("homePage").classList.add("active");
-  selectedProductId=null
+  selectedProductId=null;
 };
 
 $("searchInput").addEventListener("input",()=>{
   selectedProductId=null;
-  renderProducts()
+  renderProducts();
 });
 
 $("ownerAccessBtn").onclick=()=>{
@@ -164,32 +213,85 @@ $("ownerAccessBtn").onclick=()=>{
   $("ownerModal").classList.remove("hidden");
   $("loginView").classList.remove("hidden");
   $("dashboardView").classList.add("hidden");
-  $("passwordInput").value=""
+  $("passwordInput").value="";
+  $("loginMsg").textContent="";
 };
 
-$("loginBtn").onclick=()=>{
-  if($("passwordInput").value===PASSWORD){
+$("loginBtn").onclick=async()=>{
+
+  const password=$("passwordInput").value;
+
+  if(!password){
+    $("loginMsg").textContent="Enter password";
+    return;
+  }
+
+  try{
+
+    const data=await api("/api/login",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({password})
+    });
+
+    token=data.token;
+
+    localStorage.setItem("rajkamal_token",token);
+
     $("loginView").classList.add("hidden");
     $("dashboardView").classList.remove("hidden");
-    renderOwnerProducts()
-  }else{
-    $("loginMsg").textContent="Wrong password"
+
+    await loadProducts();
+    renderOwnerProducts();
+
+  }catch(e){
+
+    $("loginMsg").textContent="Wrong password";
   }
 };
 
-$("setLocationBtn").onclick=()=>{
-  $("storeLocationInput").value=
-    localStorage.getItem("rajkamal_location")||"";
+$("setLocationBtn").onclick=async()=>{
 
-  $("locationFormModal").classList.remove("hidden")
+  try{
+    const data=await api("/api/location");
+
+    $("storeLocationInput").value=
+      data.location||
+      data.value||
+      "";
+  }catch(e){
+    $("storeLocationInput").value="";
+  }
+
+  $("locationFormModal").classList.remove("hidden");
 };
 
-$("saveLocationBtn").onclick=()=>{
+$("saveLocationBtn").onclick=async()=>{
+
   const v=$("storeLocationInput").value.trim();
 
-  if(v){
-    localStorage.setItem("rajkamal_location",v);
-    closeAll()
+  if(!v)return;
+
+  try{
+
+    await api("/api/location",{
+      method:"PUT",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        location:v,
+        value:v
+      })
+    });
+
+    closeAll();
+
+  }catch(e){
+
+    alert("Location save nahi hui.");
   }
 };
 
@@ -217,11 +319,11 @@ function renderOwnerProducts(){
       </button>
 
     </div>
-  `).join("")
+  `).join("");
 }
 
 $("addProductBtn").onclick=()=>{
-  openForm()
+  openForm();
 };
 
 function openForm(id=null){
@@ -239,85 +341,127 @@ function openForm(id=null){
 
   if(id){
 
-    let p=products.find(x=>x.id===id);
+    const p=products.find(x=>Number(x.id)===Number(id));
+
+    if(!p)return;
 
     $("productName").value=p.name;
     $("productQty").value=p.qty;
     $("productPrice").value=p.price;
-
-    // CATEGORY
     $("productCategory").value=p.category||"General Items";
-
-    $("productDesc").value=p.desc;
+    $("productDesc").value=p.desc||"";
     $("productReviews").value=p.reviews||"";
 
     if(p.image){
+
       $("imagePreview").src=p.image;
-      $("imagePreview").classList.remove("hidden")
+      $("imagePreview").classList.remove("hidden");
+
+      $("productImage").dataset.image=p.image;
     }
   }
 
-  $("productFormModal").classList.remove("hidden")
+  $("productFormModal").classList.remove("hidden");
 }
 
 function editProduct(id){
-  openForm(id)
+  openForm(id);
 }
 
-function deleteProduct(id){
+async function deleteProduct(id){
 
-  if(confirm("Delete this product?")){
+  if(!confirm("Delete this product?"))return;
 
-    products=products.filter(p=>p.id!==id);
+  try{
 
-    save();
+    await api("/api/products/"+id,{
+      method:"DELETE"
+    });
+
+    products=products.filter(p=>Number(p.id)!==Number(id));
 
     renderOwnerProducts();
-    renderProducts()
+    renderProducts();
+
+  }catch(e){
+
+    alert("Product delete nahi hua.");
   }
 }
 
-function toggleStock(id){
+async function toggleStock(id){
 
-  let p=products.find(x=>x.id===id);
+  try{
 
-  p.out=!p.out;
+    const data=await api("/api/products/"+id+"/stock",{
+      method:"POST"
+    });
 
-  save();
+    const updated=data.product||data;
 
-  renderOwnerProducts();
-  renderProducts()
+    products=products.map(p=>
+      Number(p.id)===Number(id)
+        ?{...p,...updated}
+        :p
+    );
+
+    renderOwnerProducts();
+    renderProducts();
+
+  }catch(e){
+
+    alert("Stock update nahi hua.");
+  }
 }
 
-$("productImage").onchange=e=>{
+$("productImage").onchange=async e=>{
 
   const f=e.target.files[0];
 
   if(!f)return;
 
-  const r=new FileReader();
+  try{
 
-  r.onload=()=>{
-    $("imagePreview").src=r.result;
+    const formData=new FormData();
+    formData.append("image",f);
+
+    const data=await api("/api/upload",{
+      method:"POST",
+      body:formData
+    });
+
+    const imageUrl=
+      data.url||
+      data.image||
+      data.publicUrl||
+      "";
+
+    if(!imageUrl){
+      throw new Error("Image URL missing");
+    }
+
+    $("imagePreview").src=imageUrl;
     $("imagePreview").classList.remove("hidden");
-    $("productImage").dataset.image=r.result
-  };
 
-  r.readAsDataURL(f)
+    $("productImage").dataset.image=imageUrl;
+
+  }catch(e){
+
+    alert("Image upload nahi hui.");
+    console.error(e);
+  }
 };
 
-$("productForm").onsubmit=e=>{
+$("productForm").onsubmit=async e=>{
 
   e.preventDefault();
 
   const old=
     editingId
-      ?products.find(p=>p.id===editingId)
+      ?products.find(p=>Number(p.id)===Number(editingId))
       :null;
 
   const data={
-
-    id:editingId||Date.now(),
 
     name:$("productName").value.trim(),
 
@@ -333,32 +477,62 @@ $("productForm").onsubmit=e=>{
       $("productImage").dataset.image||
       (old?.image||""),
 
-    // SELECTED CATEGORY
     category:$("productCategory").value,
 
     out:old?.out||false
   };
 
-  if(editingId){
+  try{
 
-    products=products.map(p=>
-      p.id===editingId?data:p
-    );
+    let result;
 
-  }else{
+    if(editingId){
 
-    products.push(data);
+      result=await api("/api/products/"+editingId,{
+        method:"PUT",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify(data)
+      });
 
+    }else{
+
+      result=await api("/api/products",{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify(data)
+      });
+    }
+
+    const saved=result.product||result;
+
+    if(editingId){
+
+      products=products.map(p=>
+        Number(p.id)===Number(editingId)
+          ?saved
+          :p
+      );
+
+    }else{
+
+      products.push(saved);
+    }
+
+    closeAll();
+
+    renderOwnerProducts();
+    renderProducts();
+
+  }catch(e){
+
+    alert("Product save nahi hua.");
+    console.error(e);
   }
-
-  save();
-
-  closeAll();
-
-  renderOwnerProducts();
-
-  renderProducts()
 };
 
 renderCategories();
-renderProducts();
+loadProducts();
